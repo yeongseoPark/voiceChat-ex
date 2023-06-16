@@ -35,7 +35,7 @@ const Audio = (props) => {
     /* DOM엘리먼트는 웹페이지를 프로그래밍 언어가 사용할 수 있는 구조로 표현한 것 : HTML태그 = 노드 */
 
     return (
-        <StyledVideo playsInline autoPlay ref={ref} />
+        <audio autoPlay ref={ref} />
     );
 }
 
@@ -44,11 +44,37 @@ const videoConstraints = {
     width: window.innerWidth / 2
 };
 
+const AudioControl = ({ userAudio, peers }) => {
+    const [isAudioPlaying, setAudioPlaying] = useState(false);
+    // const userAudio = useRef();
+
+    const handleAudioControlClick = () => {
+        if (isAudioPlaying) {
+            userAudio.current.pause();
+        } else {
+            userAudio.current.play();
+        }
+        setAudioPlaying(!isAudioPlaying);
+    };
+
+    return (
+        <Container>
+            <audio ref={userAudio} autoPlay={isAudioPlaying} />
+            <button onClick={handleAudioControlClick}>
+                {isAudioPlaying ? "Pause Audio" : "Play Audio"}
+            </button>
+            {peers.map((peer, index) => {
+                return <Audio key={index} peer={peer} />;
+            })}
+        </Container>
+    );
+};
+
 /* Room 컴포넌트 */ 
 const Room = (props) => {
     const [peers, setPeers] = useState([]); // 현재 방에 있는 모든 피어들
     const socketRef = useRef(); // 소켓을 참조 
-    const userVideo = useRef(); // 사용자의 비디오 스트림참조
+    const userAudio = useRef(); // 사용자의 비디오 스트림참조
     const peersRef = useRef([]); /* Array of Peers(실제 Peer Object의 SocketId) */
     const roomID = props.match.params.roomID;
 
@@ -60,7 +86,7 @@ const Room = (props) => {
         /* getUserMedia가 스트림을 resolve하는 Promise 반환 */
         // navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: true }).then(stream => {
         navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-           userVideo.current.srcObject = stream; // own video
+           userAudio.current.srcObject = stream; // own video
            socketRef.current.emit("join room");  // 소켓을 통해 "join room" 이벤트를 서버에 전달 => 방에 참여 : 내가 initiator 
            
            /* all users라는 이벤트를 listen, 이에 대한 핸들러 등록 : 해당 이벤트는 서버가 현재 방에 있는 모든 사용자를 클라이언트에게 알려줄 때 발생 */
@@ -141,16 +167,7 @@ const Room = (props) => {
        return peer;
     }
 
-    return (
-        <Container>
-            <StyledVideo muted ref={userVideo} autoPlay playsInline />
-            {peers.map((peer, index) => {
-                return (
-                    <Video key={index} peer={peer} /> // 위에 있는 Audio 컴포넌트
-                );
-            })}
-        </Container>
-    );
+    return <AudioControl userAudio={userAudio} peers={peers} />;
 };
 
 export default Room;
