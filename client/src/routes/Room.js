@@ -64,7 +64,8 @@ const AudioControl = ({ userAudio, peers }) => {
                 {isAudioPlaying ? "Pause Audio" : "Play Audio"}
             </button>
             {peers.map((peer, index) => {
-                return <Audio key={index} peer={peer} />;
+                // return <Audio key={index} peer={peer} />;
+                return <AudioControl key={index} peer={peer} />;
             })}
         </Container>
     );
